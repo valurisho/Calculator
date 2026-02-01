@@ -1,4 +1,4 @@
-type ButtonVariant = "default" | "operation" | "equals" | "clear";
+type ButtonVariant = "default" | "operation" | "equals" | "clear" | "active";
 
 interface ButtonProps {
     value: string;
@@ -15,13 +15,14 @@ const Button = ({ value, onClick, variant = "default", className = "" }: ButtonP
         default: "bg-slate-600 text-white shadow-md hover:bg-slate-500",
         operation: "bg-orange-500 text-white shadow-md hover:bg-orange-400",
         equals: "bg-green-500 text-white shadow-md hover:bg-green-400",
-        clear: "bg-red-500 text-white shadow-md hover:bg-red-400"
+        clear: "bg-red-500 text-white shadow-md hover:bg-red-400",
+        active: "bg-golden-orange-600 text-white shadow-md ring-2 ring-bluegray-400"
     };
-
     return (
         <button
             onClick={() => onClick(value)}
             className={`${baseClasses} ${variantClasses[variant]} ${className}`}
+
         >
             {value}
         </button>
