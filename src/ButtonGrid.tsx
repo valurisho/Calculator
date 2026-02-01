@@ -2,11 +2,12 @@ import Button from "./Button";
 import type { Operation } from "./Calculator";
 
 interface ButtonGridProps {
-    onNumberClick: (number: string) => void;
+    onNumberClick: (number: string) => void; 
     onOperationClick: (operation: Operation) => void;
     onEqualsClick: () => void;
     onClearClick: () => void;
     onDecimalClick: () => void;
+    activeOperation?: Operation | null;
 }
 
 const ButtonGrid = ({
@@ -14,8 +15,14 @@ const ButtonGrid = ({
     onOperationClick,
     onEqualsClick,
     onClearClick,
-    onDecimalClick
+    onDecimalClick,
+    activeOperation
 }: ButtonGridProps) => {
+
+const getOperationVariant = (op: Operation) =>
+    activeOperation === op ? "active" : "operation";
+
+
     return (
         <div className="grid grid-cols-4 gap-3">
             {/* First row: Clear and operations */}
@@ -23,13 +30,13 @@ const ButtonGrid = ({
             <Button
                 value="÷"
                 onClick={() => onOperationClick("÷")}
-                variant="operation"
+                variant={getOperationVariant("÷")}
                 className="py-4"
             />
             <Button
                 value="×"
                 onClick={() => onOperationClick("×")}
-                variant="operation"
+                variant={getOperationVariant("×")}
                 className="py-4"
             />
 
@@ -40,7 +47,7 @@ const ButtonGrid = ({
             <Button
                 value="−"
                 onClick={() => onOperationClick("−")}
-                variant="operation"
+                variant={getOperationVariant("−")}
                 className="py-4"
             />
 
@@ -51,7 +58,7 @@ const ButtonGrid = ({
             <Button
                 value="+"
                 onClick={() => onOperationClick("+")}
-                variant="operation"
+                variant={getOperationVariant("+")}
                 className="py-4"
             />
 
