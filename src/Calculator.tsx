@@ -1,109 +1,155 @@
 import { useState } from "react";
 import Display from "./Display";
 import ButtonGrid from "./ButtonGrid";
-
-export type Operation = "+" | "−" | "×" | "÷";
+import type { Digit, Operator, PendingOperation } from "./types";
 
 const Calculator = () => {
-  const [display, setDisplay] = useState("0");
-  const [previousValue, setPreviousValue] = useState<number | null>(null);
-  const [pendingOperation, setPendingOperation] = useState<Operation | null>(
-    null,
-  );
-  const [isNewEntry, setIsNewEntry] = useState(false);
-
-  const handleNumberClick = (number: string): void => {
-    console.log("Number clicked:", number);
-    setDisplay((prev) =>
-      isNewEntry ? number : prev === "0" ? number : prev + number,
-    );
-    setIsNewEntry(false);
+  type CalculatorState = {
+    display: string;
+    pendingOperation: PendingOperation | null;
+    isNewEntry: boolean;
   };
 
+  const [state, setState] = useState<CalculatorState>({
+    display: "0",
+    pendingOperation: null,
+    isNewEntry: false,
+  });
+
+  const handleNumberClick = (number: Digit): void => {
+    console.log("Number clicked:", number);
+    setState((prev) => ({
+      ...prev,
+      display: prev.isNewEntry
+        ? number
+        : prev.display === "0"
+          ? number
+          : prev.display + number,
+      isNewEntry: false,
+    }));
+  };
+
+  type CalculationResult = number | "Error";
+
+  //changed to a switch statement
   const getResult = (
     firstValue: number,
     secondValue: number,
-    op: Operation,
-  ): number => {
-    let result = 0;
-    //decided to add this after someone divided by 0
-    if (op === "÷" && secondValue === 0) return NaN;
-    if (op === "+") result = firstValue + secondValue;
-    if (op === "−") result = firstValue - secondValue;
-    if (op === "×") result = firstValue * secondValue;
-    if (op === "÷") result = firstValue / secondValue;
-    //decided to round the decimals in case there are too many
-    const rounded = Math.round(result * 1_000_000_000) / 1_000_000_000;
-    return rounded;
+    op: Operator,
+  ): CalculationResult => {
+    let result: CalculationResult;
+    switch (op) {
+      case "+":
+        result = firstValue + secondValue;
+        break;
+      case "×":
+        result = firstValue * secondValue;
+        break;
+      case "−":
+        result = firstValue - secondValue;
+        break;
+      case "÷":
+        if (secondValue === 0) return "Error";
+        result = firstValue / secondValue;
+        break;
+      default:
+        return "Error";
+    }
+    if (typeof result == "number") {
+      return Math.round(result * 1_000_000_000) / 1_000_000_000;
+    }
+    return result;
   };
 
-  const handleOperationClick = (op: Operation): void => {
+  const handleOperationClick = (op: Operator): void => {
     console.log("Operation clicked:", op);
 
-    //Assumed that this was supossed to be a one operation calculator
-    // for simplicity so they can't type new operations if there is one already happening
-    const currentNumber = Number(display);
+    setState((prev) => {
+      const currentNumber = Number(prev.display);
 
-    //there is a pending operation
-    if (pendingOperation !== null && previousValue !== null) {
-      const result = getResult(previousValue, currentNumber, pendingOperation);
-      setDisplay(Number.isNaN(result) ? "Error": String(result));
-      setIsNewEntry(true);
-      setPreviousValue(result);
-      setPendingOperation(op);
-    } else {
-      setPreviousValue(currentNumber);
-      setPendingOperation(op);
-      setDisplay("0");
-    }
+      if (prev.pendingOperation) {
+        const result = getResult(
+          Number(prev.pendingOperation.previousValue),
+          currentNumber,
+          prev.pendingOperation.operator,
+        );
+
+        return {
+          ...prev,
+          display: result === "Error" ? "Error" : String(result),
+          isNewEntry: true,
+          pendingOperation: {
+            previousValue: result === "Error" ? currentNumber : Number(result),
+            operator: op,
+          },
+        };
+      }
+
+      return {
+        ...prev,
+        pendingOperation: {
+          previousValue: currentNumber,
+          operator: op,
+        },
+        isNewEntry: true
+      };
+    });
   };
 
   const handleEqualsClick = (): void => {
-    console.log("Equals clicked");
-    const currentNumber = Number(display);
-    if (pendingOperation === null || previousValue == null) return;
+    setState((prev) => {
+      if (!prev.pendingOperation) return prev;
 
-    const result = getResult(previousValue, currentNumber, pendingOperation);
-    setDisplay(Number.isNaN(result) ? "Error": String(result));
-    setIsNewEntry(true);
-    setPendingOperation(null);
-    setPreviousValue(result);
+      const currentNumber = Number(prev.display);
+      const result = getResult(
+        Number(prev.pendingOperation.previousValue),
+        currentNumber,
+        prev.pendingOperation.operator,
+      );
+
+      return {
+        ...prev,
+        display: result === "Error" ? "Error" : String(result),
+        isNewEntry: true,
+        pendingOperation: null,
+      };
+    });
   };
 
   const handleClearClick = (): void => {
-    setDisplay("0");
-    setPreviousValue(null);
-    setPendingOperation(null);
+    setState({
+      display: "0",
+      pendingOperation: null,
+      isNewEntry: false,
+    });
   };
 
   const handleDecimalClick = (): void => {
     console.log("Decimal clicked");
-    if (isNewEntry) {
-      setDisplay("0.");
-      setIsNewEntry(false);
-      return;
+    setState((prev) => {
+    if (prev.isNewEntry) {
+      return { ...prev, display: "0.", isNewEntry: false };
     }
-    if (display.includes(".")) return;
+    if (prev.display.includes(".")) return prev;
 
-    //test to see if its only 0s
-    if (/^0+$/.test(display)) {
-      setDisplay("0.");
-      return;
+    if (/^0+$/.test(prev.display)) {
+      return { ...prev, display: "0." };
     }
-    setDisplay((prev) => prev + ".");
+    return { ...prev, display: prev.display + "." };
+  });
   };
 
   return (
     <div className="flex items-center justify-center min-h-screen">
       <div className="bg-slate-700 rounded-2xl shadow-2xl p-6 w-80">
-        <Display value={display} />
+        <Display value={state.display} pendingOperation={state.pendingOperation} />
         <ButtonGrid
           onNumberClick={handleNumberClick}
           onOperationClick={handleOperationClick}
           onEqualsClick={handleEqualsClick}
           onClearClick={handleClearClick}
           onDecimalClick={handleDecimalClick}
-          activeOperation={pendingOperation}
+          activeOperation={state.pendingOperation?.operator}
         />
       </div>
     </div>

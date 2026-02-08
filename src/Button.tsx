@@ -1,8 +1,10 @@
-type ButtonVariant = "default" | "operation" | "equals" | "clear" | "active";
+import type { ButtonVariant } from "./types";
+import type {Value} from "./types"
+
 
 interface ButtonProps {
-    value: string;
-    onClick: (value: string) => void;
+    value: Value;
+    onClick: (value: Value) => void;
     variant?: ButtonVariant;
     className?: string;
 }
