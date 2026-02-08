@@ -9,6 +9,9 @@ const Calculator = () => {
     pendingOperation: PendingOperation | null;
     isNewEntry: boolean;
   };
+  //display just stores the current value and shows it as a string so that it can show errors and decimals
+  //pendingOperation has the previous vaye and operator while it waits for the next one
+  // I left isNewEntry as it checks whether the next digit starts a new number or appends
 
   const [state, setState] = useState<CalculatorState>({
     display: "0",
